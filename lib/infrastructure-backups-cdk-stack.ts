@@ -16,6 +16,22 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
+    const vaultServerAccountId = '197315783321';
+
+    const verificationRole = new iam.Role(this, 'VaultVerificationRole', {
+      roleName: 'VaultVerificationRole',
+      assumedBy: new iam.AccountPrincipal(vaultServerAccountId),
+    });
+
+    verificationRole.addToPolicy(new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: [
+        'iam:GetRole',
+        'iam:GetUser',
+      ],
+      resources: ['*'],
+    }));
+
     new s3.Bucket(this, 'ArchiveBucket', {
       bucketName: 'dylanw.net-archive',
       removalPolicy: cdk.RemovalPolicy.RETAIN,
