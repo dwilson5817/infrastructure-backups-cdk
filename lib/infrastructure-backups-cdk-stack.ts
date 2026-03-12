@@ -66,11 +66,6 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       environment: { VAULT_ADDR: process.env.VAULT_ADDR! },
     });
 
-    new s3.Bucket(this, 'ArchiveBucket', {
-      bucketName: 'dylanw.net-archive',
-      removalPolicy: cdk.RemovalPolicy.RETAIN,
-    });
-
     const trustAnchor = new rolesanywhere.CfnTrustAnchor(this, 'VaultTrustAnchor', {
       name: 'Vault',
       source: {
