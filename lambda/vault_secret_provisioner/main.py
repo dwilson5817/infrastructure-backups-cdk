@@ -22,13 +22,7 @@ def get_vault_client():
 
 def handler(event, context):
     get_vault_client().secrets.kv.v2.create_or_update_secret(
-        mount_point='secrets/infrastructure/ansible-playbooks',
-        path=f'aws/roles-anywhere/{event['hostname']}',
-        secret={
-            "trust_anchor_arn": 'trust_anchor_arn',
-            "profile_arn": event['profile_arn'],
-            "role_arn": event['role_arn']
-        }
+      **event,
     )
 
-    return {"message": "OK"}
+    return { "message": "OK" }

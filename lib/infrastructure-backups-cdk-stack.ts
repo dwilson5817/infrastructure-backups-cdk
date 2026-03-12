@@ -6,6 +6,7 @@ import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as rolesanywhere from 'aws-cdk-lib/aws-rolesanywhere';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as path from "node:path";
+import { AwsSdkCall } from "aws-cdk-lib/custom-resources";
 
 interface HostToGuests {
   [host: string]: string[]
@@ -48,10 +49,10 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       resources: ['*'],
     }));
 
-    const vaultProvisioner = new lambda.Function(this, 'VaultProvisioner', {
+    const vaultProvisioner = new lambda.Function(this, 'VaultSecretProvisioner', {
       runtime: lambda.Runtime.PYTHON_3_13,
       handler: 'main.handler',
-      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/vault_provisioner'), {
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/vault_secret_provisioner'), {
         bundling: {
           image: cdk.DockerImage.fromRegistry('python:3.13'),
           command: [
@@ -129,21 +130,30 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
         enabled: true,
       });
 
-      new cr.AwsCustomResource(this, `TriggerVaultUpdate-${hostname}`, {
-        onCreate: {
-          service: 'Lambda',
-          action: 'invoke',
-          parameters: {
-            FunctionName: vaultProvisioner.functionName,
-            Payload: JSON.stringify({
-              hostname,
-              trust_policy_arn: trustAnchor.attrTrustAnchorArn,
-              profile_arn: profile.attrProfileArn,
-              role_arn: role.roleArn,
-            }),
-          },
-          physicalResourceId: cr.PhysicalResourceId.of('v1'),
+      const vaultSecret = {
+        mount_point: 'secrets/infrastructure/ansible-playbooks',
+        path: `'aws/roles-anywhere/${hostname}'`,
+        secret: {
+          hostname,
+          trust_anchor_arn: trustAnchor.attrTrustAnchorArn,
+          profile_arn: profile.attrProfileArn,
+          role_arn: role.roleArn
         },
+      };
+
+      const invokeLambdaCall: AwsSdkCall = {
+        service: 'Lambda',
+        action: 'invoke',
+        parameters: {
+          FunctionName: vaultProvisioner.functionName,
+          Payload: JSON.stringify(vaultSecret),
+        },
+        physicalResourceId: cr.PhysicalResourceId.of('id'),
+      };
+
+      new cr.AwsCustomResource(this, `VaultSecret-${hostname}`, {
+        onCreate: invokeLambdaCall,
+        onUpdate: invokeLambdaCall,
         policy: cr.AwsCustomResourcePolicy.fromStatements([
           new iam.PolicyStatement({
             actions: ['lambda:InvokeFunction'],
