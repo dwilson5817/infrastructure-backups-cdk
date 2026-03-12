@@ -66,6 +66,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       new rolesanywhere.CfnProfile(this, `RoleAnywhereProfile-${hostname}`, {
         name: hostname.replace(/\./g, '-'),
         roleArns: [ role.roleArn ],
+        enabled: true,
       });
     }));
   }
