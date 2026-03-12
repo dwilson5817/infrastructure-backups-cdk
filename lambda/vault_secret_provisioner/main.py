@@ -5,16 +5,24 @@ import boto3
 import requests
 
 def get_vault_client():
-    client = hvac.Client(url=os.environ.get('VAULT_ADDR'))
+    vault_addr = os.environ.get('VAULT_ADDR')
+    aws_region = os.environ.get('AWS_REGION')
+
+    client = hvac.Client(url=)
 
     session = boto3.Session()
     credentials = session.get_credentials()
+
+    client.auth.aws.configure(
+        endpoint=f'https://sts.{aws_region}.amazonaws.com',
+    )
 
     client.auth.aws.iam_login(
         access_key=credentials.access_key,
         secret_key=credentials.secret_key,
         session_token=credentials.token,
-        role='backups-roles-anywhere-lambda'
+        role='backups-roles-anywhere-lambda',
+        region=aws_region,
     )
 
     return client
