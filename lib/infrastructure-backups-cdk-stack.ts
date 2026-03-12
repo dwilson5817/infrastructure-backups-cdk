@@ -36,6 +36,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
     }));
 
     const lambdaRole = new iam.Role(this, 'VaultProvisionerRole', {
+      roleName: 'VaultProvisionerRole',
       assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
       managedPolicies: [
         iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
