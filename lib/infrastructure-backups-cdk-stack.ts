@@ -111,6 +111,17 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
 
       backupsBucket.grantReadWrite(role);
 
+      const trustAnchor = new rolesanywhere.CfnTrustAnchor(this, 'VaultTrustAnchor', {
+        name: 'Vault',
+        source: {
+          sourceData: {
+            x509CertificateData: process.env.VAULT_INTERMEDIATE_CERT!,
+          },
+          sourceType: 'CERTIFICATE_BUNDLE',
+        },
+        enabled: true,
+      });
+
       const profile = new rolesanywhere.CfnProfile(this, `RolesAnywhereProfile-${hostname}`, {
         name: hostname.replace(/\./g, '-'),
         roleArns: [ role.roleArn ],
@@ -125,7 +136,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
             FunctionName: vaultProvisioner.functionName,
             Payload: {
               hostname,
-              trust_policy_arn: '',
+              trust_policy_arn: trustAnchor.attrTrustAnchorArn,
               profile_arn: profile.attrProfileArn,
               role_arn: role.roleArn,
             },
