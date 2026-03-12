@@ -8,14 +8,10 @@ def get_vault_client():
     vault_addr = os.environ.get('VAULT_ADDR')
     aws_region = os.environ.get('AWS_REGION')
 
-    client = hvac.Client(url=)
+    client = hvac.Client(url=vault_addr)
 
     session = boto3.Session()
     credentials = session.get_credentials()
-
-    client.auth.aws.configure(
-        endpoint=f'https://sts.{aws_region}.amazonaws.com',
-    )
 
     client.auth.aws.iam_login(
         access_key=credentials.access_key,
