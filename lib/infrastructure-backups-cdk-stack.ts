@@ -1,8 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import * as cr from 'aws-cdk-lib/custom-resources';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as rolesanywhere from 'aws-cdk-lib/aws-rolesanywhere';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as path from "node:path";
 
 interface HostToGuests {
   [host: string]: string[]
@@ -31,6 +34,35 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       ],
       resources: ['*'],
     }));
+
+    const lambdaRole = new iam.Role(this, 'VaultProvisionerRole', {
+      assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
+      managedPolicies: [
+        iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
+      ],
+    });
+
+    lambdaRole.addToPolicy(new iam.PolicyStatement({
+      actions: ['sts:GetCallerIdentity'],
+      resources: ['*'],
+    }));
+
+    const vaultProvisioner = new lambda.Function(this, 'VaultProvisioner', {
+      runtime: lambda.Runtime.PYTHON_3_13,
+      handler: 'main.handler',
+      code: lambda.Code.fromAsset(path.join(__dirname, '../lambda/vault_provisioner'), {
+        bundling: {
+          image: cdk.DockerImage.fromRegistry('python:3.13'),
+          command: [
+            'bash', '-c',
+            'pip install -r requirements.txt -t /asset-output && cp -au . /asset-output'
+          ],
+        },
+      }),
+      timeout: cdk.Duration.seconds(30),
+      role: lambdaRole,
+      environment: { VAULT_ADDR: process.env.VAULT_ADDR! },
+    });
 
     new s3.Bucket(this, 'ArchiveBucket', {
       bucketName: 'dylanw.net-archive',
@@ -79,10 +111,33 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
 
       backupsBucket.grantReadWrite(role);
 
-      new rolesanywhere.CfnProfile(this, `RoleAnywhereProfile-${hostname}`, {
+      const profile = new rolesanywhere.CfnProfile(this, `RolesAnywhereProfile-${hostname}`, {
         name: hostname.replace(/\./g, '-'),
         roleArns: [ role.roleArn ],
         enabled: true,
+      });
+
+      new cr.AwsCustomResource(this, `TriggerVaultUpdate-${hostname}`, {
+        onCreate: {
+          service: 'Lambda',
+          action: 'invoke',
+          parameters: {
+            FunctionName: vaultProvisioner.functionName,
+            Payload: {
+              hostname,
+              trust_policy_arn: '',
+              profile_arn: profile.attrProfileArn,
+              role_arn: role.roleArn,
+            },
+          },
+          physicalResourceId: cr.PhysicalResourceId.of('v1'),
+        },
+        policy: cr.AwsCustomResourcePolicy.fromStatements([
+          new iam.PolicyStatement({
+            actions: ['lambda:InvokeFunction'],
+            resources: [vaultProvisioner.functionArn],
+          }),
+        ]),
       });
     }));
   }
