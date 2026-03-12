@@ -63,7 +63,10 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       }),
       timeout: cdk.Duration.seconds(30),
       role: lambdaRole,
-      environment: { VAULT_ADDR: process.env.VAULT_ADDR! },
+      environment: {
+        VAULT_ADDR: process.env.VAULT_ADDR!,
+        VAULT_ROLE: process.env.VAULT_ROLE!,
+      },
     });
 
     const trustAnchor = new rolesanywhere.CfnTrustAnchor(this, 'VaultTrustAnchor', {
@@ -127,7 +130,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
 
       const vaultSecret = {
         mount_point: 'secrets/infrastructure/ansible-playbooks',
-        path: `'aws/roles-anywhere/${hostname}'`,
+        path: `aws/roles-anywhere/${hostname}`,
         secret: {
           hostname,
           trust_anchor_arn: trustAnchor.attrTrustAnchorArn,
