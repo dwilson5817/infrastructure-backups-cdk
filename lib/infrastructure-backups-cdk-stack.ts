@@ -139,6 +139,11 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
         },
       };
 
+      const secretHash = crypto
+          .createHash('sha256')
+          .update(JSON.stringify(vaultSecret))
+          .digest('hex');
+
       const invokeLambdaCall: AwsSdkCall = {
         service: 'Lambda',
         action: 'invoke',
@@ -146,7 +151,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
           FunctionName: vaultProvisioner.functionName,
           Payload: JSON.stringify(vaultSecret),
         },
-        physicalResourceId: cr.PhysicalResourceId.of('id'),
+        physicalResourceId: cr.PhysicalResourceId.of(secretHash),
       };
 
       new cr.AwsCustomResource(this, `VaultSecret-${hostname}`, {
