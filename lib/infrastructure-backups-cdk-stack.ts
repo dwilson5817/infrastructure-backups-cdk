@@ -64,7 +64,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       backupsBucket.grantReadWrite(role);
 
       new rolesanywhere.CfnProfile(this, `RoleAnywhereProfile-${hostname}`, {
-        name: hostname,
+        name: hostname.replace(/\./g, '-'),
         roleArns: [ role.roleArn ],
       });
     }));
