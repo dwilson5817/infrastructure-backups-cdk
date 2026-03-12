@@ -134,12 +134,12 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
           action: 'invoke',
           parameters: {
             FunctionName: vaultProvisioner.functionName,
-            Payload: {
+            Payload: JSON.stringify({
               hostname,
               trust_policy_arn: trustAnchor.attrTrustAnchorArn,
               profile_arn: profile.attrProfileArn,
               role_arn: role.roleArn,
-            },
+            }),
           },
           physicalResourceId: cr.PhysicalResourceId.of('v1'),
         },
