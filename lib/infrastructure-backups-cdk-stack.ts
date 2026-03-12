@@ -7,6 +7,7 @@ import * as rolesanywhere from 'aws-cdk-lib/aws-rolesanywhere';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as path from "node:path";
 import { AwsSdkCall } from "aws-cdk-lib/custom-resources";
+import * as crypto from 'crypto';
 
 interface HostToGuests {
   [host: string]: string[]
