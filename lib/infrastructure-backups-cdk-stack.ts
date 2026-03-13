@@ -133,7 +133,6 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
         mount_point: 'secrets/infrastructure/ansible-playbooks',
         path: `aws/roles-anywhere/${hostname}`,
         secret: {
-          hostname,
           trust_anchor_arn: trustAnchor.attrTrustAnchorArn,
           profile_arn: profile.attrProfileArn,
           role_arn: role.roleArn
