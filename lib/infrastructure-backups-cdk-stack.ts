@@ -14,7 +14,7 @@ interface HostToGuests {
 }
 
 const hostsToBackup: HostToGuests = {
-  'london.dylanw.net': ['git01', 'sql01', 'web01', 'game01', 'game02']
+  'london.dylanw.net': ['git01', 'sql01', 'web01', 'mail01', 'game01', 'game02']
 };
 
 export class InfrastructureBackupsCdkStack extends cdk.Stack {
