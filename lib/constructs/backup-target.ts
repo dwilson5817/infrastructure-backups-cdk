@@ -35,7 +35,6 @@ export class BackupTarget extends Construct {
 
         this.role = new iam.Role(this, 'BackupRole', {
             assumedBy: rolesAnywherePrincipal,
-            roleName: `BackupRole-${props.hostname}`,
             description: `Backup role for ${props.hostname}`,
         });
 
@@ -48,7 +47,6 @@ export class BackupTarget extends Construct {
         );
 
         this.bucket = new s3.Bucket(this, 'BackupsBucket', {
-            bucketName: `${props.hostname}-backups`,
             removalPolicy: cdk.RemovalPolicy.RETAIN,
             autoDeleteObjects: false,
             encryption: s3.BucketEncryption.S3_MANAGED,

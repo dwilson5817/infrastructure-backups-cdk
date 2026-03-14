@@ -17,7 +17,6 @@ export class VaultSecretProvider extends Construct {
         super(scope, id);
 
         this.role = new iam.Role(this, 'Role', {
-            roleName: 'VaultProvisionerRole',
             assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
             managedPolicies: [
                 iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
@@ -30,7 +29,6 @@ export class VaultSecretProvider extends Construct {
         }));
 
         this.function = new lambda.Function(this, 'Function', {
-            functionName: 'VaultSecretProvisioner',
             runtime: lambda.Runtime.PYTHON_3_13,
             handler: 'main.handler',
             code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/vault_secret_custom_resource'), {
