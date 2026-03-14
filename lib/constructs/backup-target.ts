@@ -67,7 +67,23 @@ export class BackupTarget extends Construct {
             ],
         });
 
-        this.bucket.grantReadWrite(this.role);
+        this.role.addToPolicy(new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            actions: [
+                's3:ListBucket',
+                's3:GetBucketLocation',
+            ],
+            resources: [this.bucket.bucketArn],
+        }));
+
+        this.role.addToPolicy(new iam.PolicyStatement({
+            effect: iam.Effect.ALLOW,
+            actions: [
+                's3:PutObject',
+                's3:AbortMultipartUpload',
+            ],
+            resources: [this.bucket.arnForObjects('*')],
+        }));
 
         this.profile = new rolesanywhere.CfnProfile(this, 'RolesAnywhereProfile', {
             name: resourceSuffix,
