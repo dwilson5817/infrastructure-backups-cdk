@@ -50,9 +50,14 @@ export class BackupTarget extends Construct {
         this.bucket = new s3.Bucket(this, 'BackupsBucket', {
             bucketName: `${props.hostname}-backups`,
             removalPolicy: cdk.RemovalPolicy.RETAIN,
+            autoDeleteObjects: false,
+            encryption: s3.BucketEncryption.S3_MANAGED,
+            blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
+            enforceSSL: true,
+            versioned: true,
             lifecycleRules: [
                 {
-                    id: 'TransitionToDeepArchive',
+                    id: 'ArchiveBackups',
                     enabled: true,
                     transitions: [
                         {
