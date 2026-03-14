@@ -1,0 +1,86 @@
+import * as cdk from 'aws-cdk-lib';
+import { Construct } from 'constructs';
+import * as iam from 'aws-cdk-lib/aws-iam';
+import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as rolesanywhere from 'aws-cdk-lib/aws-rolesanywhere';
+import * as s3 from 'aws-cdk-lib/aws-s3';
+
+import { toResourceSuffix } from '../utils/hostnames';
+import { buildBackupVaultSecretPayload } from '../utils/vault-secret';
+import { VaultSecret } from './vault-secret';
+
+export interface BackupTargetProps {
+    hostname: string;
+    trustAnchorArn: string;
+    provisioner: lambda.IFunction;
+}
+
+export class BackupTarget extends Construct {
+    public readonly role: iam.Role;
+    public readonly bucket: s3.Bucket;
+    public readonly profile: rolesanywhere.CfnProfile;
+
+    constructor(scope: Construct, id: string, props: BackupTargetProps) {
+        super(scope, id);
+
+        const resourceSuffix = toResourceSuffix(props.hostname);
+
+        this.role = new iam.Role(this, 'BackupRole', {
+            assumedBy: new iam.ServicePrincipal('rolesanywhere.amazonaws.com'),
+            roleName: `BackupRole-${props.hostname}`,
+            description: `Backup role for ${props.hostname}`,
+            externalIds: [],
+        });
+
+        this.role.assumeRolePolicy?.addStatements(
+            new iam.PolicyStatement({
+                effect: iam.Effect.ALLOW,
+                principals: [new iam.ServicePrincipal('rolesanywhere.amazonaws.com')],
+                actions: ['sts:AssumeRole', 'sts:TagSession', 'sts:SetSourceIdentity'],
+                conditions: {
+                    StringEquals: {
+                        'aws:PrincipalTag/x509Subject/CN': props.hostname,
+                    },
+                },
+            })
+        );
+
+        this.bucket = new s3.Bucket(this, 'BackupsBucket', {
+            bucketName: `${props.hostname}-backups`,
+            removalPolicy: cdk.RemovalPolicy.RETAIN,
+            lifecycleRules: [
+                {
+                    id: 'TransitionToDeepArchive',
+                    enabled: true,
+                    transitions: [
+                        {
+                            storageClass: s3.StorageClass.DEEP_ARCHIVE,
+                            transitionAfter: cdk.Duration.days(3),
+                        },
+                    ],
+                },
+            ],
+        });
+
+        this.bucket.grantReadWrite(this.role);
+
+        this.profile = new rolesanywhere.CfnProfile(this, 'RolesAnywhereProfile', {
+            name: resourceSuffix,
+            roleArns: [this.role.roleArn],
+            enabled: true,
+        });
+
+        const vaultPayload = buildBackupVaultSecretPayload({
+            hostname: props.hostname,
+            bucketName: this.bucket.bucketName,
+            trustAnchorArn: props.trustAnchorArn,
+            profileArn: this.profile.attrProfileArn,
+            roleArn: this.role.roleArn,
+        });
+
+        new VaultSecret(this, 'VaultSecret', {
+            provisioner: props.provisioner,
+            payload: vaultPayload,
+        });
+    }
+}
