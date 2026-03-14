@@ -24,24 +24,26 @@ export class BackupTarget extends Construct {
         super(scope, id);
 
         const resourceSuffix = toResourceSuffix(props.hostname);
+        const rolesAnywherePrincipal = new iam.PrincipalWithConditions(
+            new iam.ServicePrincipal('rolesanywhere.amazonaws.com'),
+            {
+                StringEquals: {
+                    'aws:PrincipalTag/x509Subject/CN': props.hostname,
+                },
+            }
+        );
 
         this.role = new iam.Role(this, 'BackupRole', {
-            assumedBy: new iam.ServicePrincipal('rolesanywhere.amazonaws.com'),
+            assumedBy: rolesAnywherePrincipal,
             roleName: `BackupRole-${props.hostname}`,
             description: `Backup role for ${props.hostname}`,
-            externalIds: [],
         });
 
         this.role.assumeRolePolicy?.addStatements(
             new iam.PolicyStatement({
                 effect: iam.Effect.ALLOW,
-                principals: [new iam.ServicePrincipal('rolesanywhere.amazonaws.com')],
-                actions: ['sts:AssumeRole', 'sts:TagSession', 'sts:SetSourceIdentity'],
-                conditions: {
-                    StringEquals: {
-                        'aws:PrincipalTag/x509Subject/CN': props.hostname,
-                    },
-                },
+                principals: [rolesAnywherePrincipal],
+                actions: ['sts:TagSession', 'sts:SetSourceIdentity'],
             })
         );
 
