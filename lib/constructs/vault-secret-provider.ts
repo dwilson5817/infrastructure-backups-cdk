@@ -4,16 +4,16 @@ import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as path from 'node:path';
 
-export interface VaultProvisionerProps {
+export interface VaultSecretProviderProps {
     vaultAddr: string;
     vaultRole: string;
 }
 
-export class VaultProvisioner extends Construct {
+export class VaultSecretProvider extends Construct {
     public readonly role: iam.Role;
     public readonly function: lambda.Function;
 
-    constructor(scope: Construct, id: string, props: VaultProvisionerProps) {
+    constructor(scope: Construct, id: string, props: VaultSecretProviderProps) {
         super(scope, id);
 
         this.role = new iam.Role(this, 'Role', {
@@ -33,7 +33,7 @@ export class VaultProvisioner extends Construct {
             functionName: 'VaultSecretProvisioner',
             runtime: lambda.Runtime.PYTHON_3_13,
             handler: 'main.handler',
-            code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/vault_secret_provisioner'), {
+            code: lambda.Code.fromAsset(path.join(__dirname, '../../lambda/vault_secret_custom_resource'), {
                 bundling: {
                     image: cdk.DockerImage.fromRegistry('python:3.13'),
                     command: [

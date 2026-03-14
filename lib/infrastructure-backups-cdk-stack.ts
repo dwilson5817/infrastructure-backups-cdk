@@ -5,7 +5,7 @@ import * as rolesanywhere from 'aws-cdk-lib/aws-rolesanywhere';
 
 import { hostsToBackup } from './config/backups-hosts';
 import { BackupTarget } from './constructs/backup-target';
-import { VaultProvisioner } from './constructs/vault-provisioner';
+import { VaultSecretProvider } from './constructs/vault-secret-provider';
 import { expandHostnames, toResourceSuffix } from './utils/hostnames';
 
 export class InfrastructureBackupsCdkStack extends cdk.Stack {
@@ -28,7 +28,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       resources: ['*'],
     }));
 
-    const vaultProvisioner = new VaultProvisioner(this, 'VaultProvisioner', {
+    const vaultProvisioner = new VaultSecretProvider(this, 'VaultProvisioner', {
       vaultAddr: process.env.VAULT_ADDR!,
       vaultRole: process.env.VAULT_ROLE!,
     });
