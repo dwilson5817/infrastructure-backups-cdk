@@ -8,11 +8,23 @@ import { BackupTarget } from './constructs/backup-target';
 import { VaultSecretProvider } from './constructs/vault-secret-provider';
 import { expandHostnames, toResourceSuffix } from './utils/hostnames';
 
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+
+  return value;
+}
+
 export class InfrastructureBackupsCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
 
     const vaultServerAccountId = '197315783321';
+    const vaultAddr = requireEnv('VAULT_ADDR');
+    const vaultRole = requireEnv('VAULT_ROLE');
+    const vaultIntermediateCert = requireEnv('VAULT_INTERMEDIATE_CERT');
 
     const verificationRole = new iam.Role(this, 'VaultVerificationRole', {
       roleName: 'VaultVerificationRole',
@@ -29,15 +41,15 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
     }));
 
     const vaultProvisioner = new VaultSecretProvider(this, 'VaultProvisioner', {
-      vaultAddr: process.env.VAULT_ADDR!,
-      vaultRole: process.env.VAULT_ROLE!,
+      vaultAddr,
+      vaultRole,
     });
 
     const trustAnchor = new rolesanywhere.CfnTrustAnchor(this, 'VaultTrustAnchor', {
       name: 'Vault',
       source: {
         sourceData: {
-          x509CertificateData: process.env.VAULT_INTERMEDIATE_CERT!,
+          x509CertificateData: vaultIntermediateCert,
         },
         sourceType: 'CERTIFICATE_BUNDLE',
       },
