@@ -1,5 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import * as cr from 'aws-cdk-lib/custom-resources';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as logs from 'aws-cdk-lib/aws-logs';
@@ -13,6 +14,7 @@ export interface VaultSecretProviderProps {
 export class VaultSecretProvider extends Construct {
     public readonly role: iam.Role;
     public readonly function: lambda.Function;
+    public readonly serviceToken: string;
 
     constructor(scope: Construct, id: string, props: VaultSecretProviderProps) {
         super(scope, id);
@@ -56,5 +58,11 @@ export class VaultSecretProvider extends Construct {
                 VAULT_ROLE: props.vaultRole,
             },
         });
+
+        const provider = new cr.Provider(this, 'Provider', {
+            onEventHandler: this.function,
+        });
+
+        this.serviceToken = provider.serviceToken;
     }
 }

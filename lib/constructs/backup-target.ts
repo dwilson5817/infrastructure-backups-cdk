@@ -1,7 +1,6 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import * as lambda from 'aws-cdk-lib/aws-lambda';
 import * as rolesanywhere from 'aws-cdk-lib/aws-rolesanywhere';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 
@@ -12,7 +11,7 @@ import { VaultSecret } from './vault-secret';
 export interface BackupTargetProps {
     hostname: string;
     trustAnchorArn: string;
-    provider: lambda.IFunction;
+    vaultSecretServiceToken: string;
 }
 
 export class BackupTarget extends Construct {
@@ -100,7 +99,7 @@ export class BackupTarget extends Construct {
         });
 
         new VaultSecret(this, 'VaultSecret', {
-            provider: props.provider,
+            serviceToken: props.vaultSecretServiceToken,
             payload: vaultPayload,
         });
     }

@@ -81,7 +81,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       new BackupTarget(this, `BackupTarget-${toResourceSuffix(hostname)}`, {
         hostname,
         trustAnchorArn: trustAnchor.attrTrustAnchorArn,
-        provider: vaultSecretProvider.function,
+        vaultSecretServiceToken: vaultSecretProvider.serviceToken,
       });
     }
   }
