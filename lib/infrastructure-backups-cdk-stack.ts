@@ -17,6 +17,24 @@ function requireEnv(name: string): string {
   return value;
 }
 
+function validateHostnames(hostnames: string[]): void {
+  if (hostnames.length === 0) {
+    throw new Error('No backup hosts are configured.');
+  }
+
+  const uniqueHostnames = new Set(hostnames);
+  if (uniqueHostnames.size !== hostnames.length) {
+    throw new Error('Duplicate hostnames detected in backup host configuration.');
+  }
+
+  for (const hostname of hostnames) {
+    const resourceSuffix = toResourceSuffix(hostname);
+    if (!resourceSuffix) {
+      throw new Error(`Hostname "${hostname}" does not produce a valid resource suffix.`);
+    }
+  }
+}
+
 export class InfrastructureBackupsCdkStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props?: cdk.StackProps) {
     super(scope, id, props);
@@ -25,6 +43,9 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
     const vaultAddr = requireEnv('VAULT_ADDR');
     const vaultRole = requireEnv('VAULT_ROLE');
     const vaultIntermediateCert = requireEnv('VAULT_INTERMEDIATE_CERT');
+    const backupHostnames = expandHostnames(hostsToBackup);
+
+    validateHostnames(backupHostnames);
 
     const verificationRole = new iam.Role(this, 'VaultVerificationRole', {
       roleName: 'VaultVerificationRole',
@@ -56,7 +77,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       enabled: true,
     });
 
-    for (const hostname of expandHostnames(hostsToBackup)) {
+    for (const hostname of backupHostnames) {
       new BackupTarget(this, `BackupTarget-${toResourceSuffix(hostname)}`, {
         hostname,
         trustAnchorArn: trustAnchor.attrTrustAnchorArn,
