@@ -61,7 +61,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       resources: ['*'],
     }));
 
-    const vaultProvisioner = new VaultSecretProvider(this, 'VaultProvisioner', {
+    const vaultSecretProvider = new VaultSecretProvider(this, 'VaultProvisioner', {
       vaultAddr,
       vaultRole,
     });
@@ -81,7 +81,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       new BackupTarget(this, `BackupTarget-${toResourceSuffix(hostname)}`, {
         hostname,
         trustAnchorArn: trustAnchor.attrTrustAnchorArn,
-        provisioner: vaultProvisioner.function,
+        provider: vaultSecretProvider.function,
       });
     }
   }

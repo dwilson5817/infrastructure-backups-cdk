@@ -2,6 +2,7 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as lambda from 'aws-cdk-lib/aws-lambda';
+import * as logs from 'aws-cdk-lib/aws-logs';
 import * as path from 'node:path';
 
 export interface VaultSecretProviderProps {
@@ -28,6 +29,11 @@ export class VaultSecretProvider extends Construct {
             resources: ['*'],
         }));
 
+        const logGroup = new logs.LogGroup(this, 'LogGroup', {
+            retention: logs.RetentionDays.ONE_MONTH,
+            removalPolicy: cdk.RemovalPolicy.DESTROY,
+        });
+
         this.function = new lambda.Function(this, 'Function', {
             runtime: lambda.Runtime.PYTHON_3_13,
             handler: 'main.handler',
@@ -41,7 +47,9 @@ export class VaultSecretProvider extends Construct {
                     ],
                 },
             }),
+            description: 'Handles CloudFormation lifecycle events for Vault secrets.',
             timeout: cdk.Duration.seconds(30),
+            logGroup,
             role: this.role,
             environment: {
                 VAULT_ADDR: props.vaultAddr,

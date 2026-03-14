@@ -6,7 +6,7 @@ import { Construct } from 'constructs';
 import { VaultSecretPayload } from '../utils/vault-secret';
 
 export interface VaultSecretProps {
-    provisioner: lambda.IFunction;
+    provider: lambda.IFunction;
     payload: VaultSecretPayload;
 }
 
@@ -15,7 +15,7 @@ export class VaultSecret extends Construct {
         super(scope, id);
 
         const provider = new cr.Provider(this, 'Provider', {
-            onEventHandler: props.provisioner,
+            onEventHandler: props.provider,
         });
 
         new cdk.CustomResource(this, 'Resource', {

@@ -12,7 +12,7 @@ import { VaultSecret } from './vault-secret';
 export interface BackupTargetProps {
     hostname: string;
     trustAnchorArn: string;
-    provisioner: lambda.IFunction;
+    provider: lambda.IFunction;
 }
 
 export class BackupTarget extends Construct {
@@ -84,7 +84,7 @@ export class BackupTarget extends Construct {
         });
 
         new VaultSecret(this, 'VaultSecret', {
-            provisioner: props.provisioner,
+            provider: props.provider,
             payload: vaultPayload,
         });
     }
