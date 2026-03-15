@@ -42,7 +42,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
     const vaultServerAccountId = '197315783321';
     const vaultAddr = requireEnv('VAULT_ADDR');
     const vaultRole = requireEnv('VAULT_ROLE');
-    const vaultIntermediateCert = requireEnv('VAULT_INTERMEDIATE_CERT');
+    const rootCertificate = requireEnv('ROOT_CERTIFICATE');
     const backupHostnames = expandHostnames(hostsToBackup);
 
     validateHostnames(backupHostnames);
@@ -70,7 +70,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       name: 'Vault',
       source: {
         sourceData: {
-          x509CertificateData: vaultIntermediateCert,
+          x509CertificateData: rootCertificate,
         },
         sourceType: 'CERTIFICATE_BUNDLE',
       },
