@@ -45,7 +45,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
     const rootCertificate = requireEnv('ROOT_CERTIFICATE');
     const backupHostnames = expandHostnames(hostsToBackup);
 
-    // validateHostnames(backupHostnames);
+    validateHostnames(backupHostnames);
 
     const verificationRole = new iam.Role(this, 'VaultVerificationRole', {
       assumedBy: new iam.AccountPrincipal(vaultServerAccountId),
