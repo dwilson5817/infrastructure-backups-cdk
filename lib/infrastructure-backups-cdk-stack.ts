@@ -48,7 +48,6 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
     validateHostnames(backupHostnames);
 
     const verificationRole = new iam.Role(this, 'VaultVerificationRole', {
-      roleName: 'VaultVerificationRole',
       assumedBy: new iam.AccountPrincipal(vaultServerAccountId),
     });
 
@@ -61,7 +60,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       resources: ['*'],
     }));
 
-    const vaultSecretProvider = new VaultSecretProvider(this, 'VaultProvisioner', {
+    const vaultSecretProvider = new VaultSecretProvider(this, 'VaultSecretProvider', {
       vaultAddr,
       vaultRole,
     });

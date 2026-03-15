@@ -19,18 +19,6 @@ export class VaultSecretProvider extends Construct {
     constructor(scope: Construct, id: string, props: VaultSecretProviderProps) {
         super(scope, id);
 
-        this.role = new iam.Role(this, 'Role', {
-            assumedBy: new iam.ServicePrincipal('lambda.amazonaws.com'),
-            managedPolicies: [
-                iam.ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole'),
-            ],
-        });
-
-        this.role.addToPolicy(new iam.PolicyStatement({
-            actions: ['sts:GetCallerIdentity'],
-            resources: ['*'],
-        }));
-
         const logGroup = new logs.LogGroup(this, 'LogGroup', {
             retention: logs.RetentionDays.ONE_MONTH,
             removalPolicy: cdk.RemovalPolicy.DESTROY,
@@ -52,7 +40,6 @@ export class VaultSecretProvider extends Construct {
             description: 'Handles CloudFormation lifecycle events for Vault secrets.',
             timeout: cdk.Duration.seconds(30),
             logGroup,
-            role: this.role,
             environment: {
                 VAULT_ADDR: props.vaultAddr,
                 VAULT_ROLE: props.vaultRole,
