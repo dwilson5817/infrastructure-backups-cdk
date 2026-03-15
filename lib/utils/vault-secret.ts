@@ -22,7 +22,7 @@ export function buildBackupVaultSecretPayload(
 ): VaultSecretPayload {
     return {
         mountPoint: 'secrets/infrastructure/ansible-playbooks',
-        path: `aws/roles-anywhere/${props.hostname}`,
+        path: `aws/roles-anywhere/backups/${props.hostname}`,
         secret: {
             backupsBucket: props.bucketName,
             trustAnchorArn: props.trustAnchorArn,
