@@ -56,12 +56,8 @@ export class BackupTarget extends Construct {
                 {
                     id: 'ArchiveBackups',
                     enabled: true,
-                    transitions: [
-                        {
-                            storageClass: s3.StorageClass.DEEP_ARCHIVE,
-                            transitionAfter: cdk.Duration.days(3),
-                        },
-                    ],
+                    expiration: cdk.Duration.days(180),
+                    noncurrentVersionExpiration: cdk.Duration.days(180),
                 },
             ],
         });
