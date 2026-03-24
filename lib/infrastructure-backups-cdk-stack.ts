@@ -67,6 +67,9 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
 
     const trustAnchor = new rolesanywhere.CfnTrustAnchor(this, 'VaultTrustAnchor', {
       name: 'Vault',
+      notificationSettings: [
+        { event: 'END_ENTITY_CERTIFICATE_EXPIRY', enabled: false }
+      ],
       source: {
         sourceData: {
           x509CertificateData: rootCertificate,
