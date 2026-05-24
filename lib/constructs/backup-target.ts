@@ -1,8 +1,11 @@
 import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
+import * as cloudwatch from 'aws-cdk-lib/aws-cloudwatch';
+import * as cw_actions from 'aws-cdk-lib/aws-cloudwatch-actions';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as rolesanywhere from 'aws-cdk-lib/aws-rolesanywhere';
 import * as s3 from 'aws-cdk-lib/aws-s3';
+import * as sns from 'aws-cdk-lib/aws-sns';
 
 import { toResourceSuffix } from '../utils/hostnames';
 import { buildBackupVaultSecretPayload } from '../utils/vault-secret';
@@ -12,6 +15,7 @@ export interface BackupTargetProps {
     hostname: string;
     trustAnchorArn: string;
     vaultSecretServiceToken: string;
+    alarmTopic: sns.ITopic;
 }
 
 export class BackupTarget extends Construct {
@@ -60,6 +64,7 @@ export class BackupTarget extends Construct {
                     noncurrentVersionExpiration: cdk.Duration.days(180),
                 },
             ],
+            metrics: [{ id: 'EntireBucket' }],
         });
 
         this.role.addToPolicy(new iam.PolicyStatement({
@@ -98,5 +103,30 @@ export class BackupTarget extends Construct {
             serviceToken: props.vaultSecretServiceToken,
             payload: vaultPayload,
         });
+
+        const putRequestsMetric = new cloudwatch.Metric({
+            namespace: 'AWS/S3',
+            metricName: 'PutRequests',
+            dimensionsMap: {
+                BucketName: this.bucket.bucketName,
+                FilterId: 'EntireBucket',
+            },
+            period: cdk.Duration.hours(1),
+            statistic: 'Sum',
+        });
+
+        const alarm = new cloudwatch.Alarm(this, 'MissingBackupAlarm', {
+            metric: putRequestsMetric,
+            threshold: 1,
+            comparisonOperator: cloudwatch.ComparisonOperator.LESS_THAN_THRESHOLD,
+            evaluationPeriods: 25,
+            datapointsToAlarm: 25,
+            treatMissingData: cloudwatch.TreatMissingData.BREACHING,
+            alarmName: `BackupMissing-${resourceSuffix}`,
+            alarmDescription: `Triggers when no backup was received from ${props.hostname} in the last day`,
+        });
+
+        alarm.addAlarmAction(new cw_actions.SnsAction(props.alarmTopic));
+        alarm.addOkAction(new cw_actions.SnsAction(props.alarmTopic));
     }
 }

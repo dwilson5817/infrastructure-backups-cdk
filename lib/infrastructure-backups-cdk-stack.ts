@@ -2,6 +2,8 @@ import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
 import * as rolesanywhere from 'aws-cdk-lib/aws-rolesanywhere';
+import * as sns from 'aws-cdk-lib/aws-sns';
+import * as subscriptions from 'aws-cdk-lib/aws-sns-subscriptions';
 
 import { hostsToBackup } from './config/backups-hosts';
 import { BackupTarget } from './constructs/backup-target';
@@ -43,6 +45,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
     const vaultAddr = requireEnv('VAULT_ADDR');
     const vaultRole = requireEnv('VAULT_ROLE');
     const rootCertificate = requireEnv('ROOT_CERTIFICATE');
+    const alarmEmail = requireEnv('ALARM_EMAIL');
     const backupHostnames = expandHostnames(hostsToBackup);
 
     validateHostnames(backupHostnames);
@@ -65,6 +68,11 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
       vaultRole,
     });
 
+    const alarmTopic = new sns.Topic(this, 'BackupAlarmTopic', {
+      displayName: 'Infrastructure Backups Alarms',
+    });
+    alarmTopic.addSubscription(new subscriptions.EmailSubscription(alarmEmail));
+
     const trustAnchor = new rolesanywhere.CfnTrustAnchor(this, 'VaultTrustAnchor', {
       name: 'Vault',
       notificationSettings: [
@@ -84,6 +92,7 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
         hostname,
         trustAnchorArn: trustAnchor.attrTrustAnchorArn,
         vaultSecretServiceToken: vaultSecretProvider.serviceToken,
+        alarmTopic,
       });
     }
   }
