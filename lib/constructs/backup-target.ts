@@ -115,7 +115,7 @@ export class BackupTarget extends Construct {
             statistic: 'Sum',
         });
 
-        const alarm = new cloudwatch.Alarm(this, `MissingBackupAlarm${hostnameToPascalCase(props.hostname)}`, {
+        const alarm = new cloudwatch.Alarm(this, 'MissingBackupAlarm', {
             metric: putRequestsMetric,
             threshold: 1,
             comparisonOperator: cloudwatch.ComparisonOperator.LESS_THAN_THRESHOLD,
