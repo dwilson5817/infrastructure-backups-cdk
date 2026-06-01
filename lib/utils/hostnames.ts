@@ -13,3 +13,11 @@ export function expandHostnames(hostsToBackup: HostGroupMap): string[] {
         guests.map((guest) => `${guest}.${host}`)
     );
 }
+
+export function hostnameToPascalCase(hostname: string): string {
+    return hostname
+        .split(/[.\-_]/)        // split on dots, hyphens, underscores
+        .filter(Boolean)        // drop empty segments
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join('');
+}

@@ -7,7 +7,7 @@ import * as rolesanywhere from 'aws-cdk-lib/aws-rolesanywhere';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as sns from 'aws-cdk-lib/aws-sns';
 
-import { toResourceSuffix } from '../utils/hostnames';
+import {hostnameToPascalCase, toResourceSuffix} from '../utils/hostnames';
 import { buildBackupVaultSecretPayload } from '../utils/vault-secret';
 import { VaultSecret } from './vault-secret';
 
@@ -115,14 +115,15 @@ export class BackupTarget extends Construct {
             statistic: 'Sum',
         });
 
-        const alarm = new cloudwatch.Alarm(this, 'MissingBackupAlarm', {
+
+
+        const alarm = new cloudwatch.Alarm(this, `MissingBackupAlarm${hostnameToPascalCase(props.hostname)}`, {
             metric: putRequestsMetric,
             threshold: 1,
             comparisonOperator: cloudwatch.ComparisonOperator.LESS_THAN_THRESHOLD,
             evaluationPeriods: 25,
             datapointsToAlarm: 25,
             treatMissingData: cloudwatch.TreatMissingData.BREACHING,
-            alarmName: `BackupMissing-${resourceSuffix}`,
             alarmDescription: `Triggers when no backup was received from ${props.hostname} in the last day`,
         });
 
