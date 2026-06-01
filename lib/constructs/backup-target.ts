@@ -7,7 +7,7 @@ import * as rolesanywhere from 'aws-cdk-lib/aws-rolesanywhere';
 import * as s3 from 'aws-cdk-lib/aws-s3';
 import * as sns from 'aws-cdk-lib/aws-sns';
 
-import {hostnameToPascalCase, toResourceSuffix} from '../utils/hostnames';
+import { toResourceSuffix } from '../utils/hostnames';
 import { buildBackupVaultSecretPayload } from '../utils/vault-secret';
 import { VaultSecret } from './vault-secret';
 
