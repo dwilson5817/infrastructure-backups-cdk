@@ -9,6 +9,7 @@ import { hostsToBackup } from './config/backups-hosts';
 import { BackupTarget } from './constructs/backup-target';
 import { VaultSecretProvider } from './constructs/vault-secret-provider';
 import { expandHostnames, toResourceSuffix } from './utils/hostnames';
+import * as s3 from "aws-cdk-lib/aws-s3";
 
 function requireEnv(name: string): string {
   const value = process.env[name];
@@ -85,6 +86,10 @@ export class InfrastructureBackupsCdkStack extends cdk.Stack {
         sourceType: 'CERTIFICATE_BUNDLE',
       },
       enabled: true,
+    });
+
+    new s3.Bucket(this, 'ArchiveBucket', {
+      removalPolicy: cdk.RemovalPolicy.RETAIN,
     });
 
     for (const hostname of backupHostnames) {
